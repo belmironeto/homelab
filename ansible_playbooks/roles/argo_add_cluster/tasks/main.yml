@@ -1,0 +1,3 @@
+---
+- name: Add new Cluster to ArgoCD
+  shell: argocd cluster add {{ KUBE_CONTEXT }}

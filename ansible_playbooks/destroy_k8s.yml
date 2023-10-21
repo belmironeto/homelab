@@ -1,0 +1,6 @@
+- hosts: localhost
+  user: belmiro
+  gather_facts: no
+  roles:
+   - { role: k8s_remove_context, KUBE_CONTEXT: "k8s-cluster", tags: ["k8s_remove_context_local"] }
+   - { role: argo_remove_cluster, KUBE_CONTEXT: "k8s-cluster", tags: ["argo_remove_cluster"] }

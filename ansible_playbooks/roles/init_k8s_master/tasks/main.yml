@@ -1,0 +1,49 @@
+---
+- name: Inicializando o cluster k8s
+  command:
+    kubeadm init --control-plane-endpoint {{ K8S_MASTER_NODE_IP }}:{{ K8S_API_SECURE_PORT }}
+  register: kubeadm_init
+
+- name: Criando o diretorio .kube
+  file:
+    path: /home/ubuntu/.kube
+    owner: ubuntu
+    group: ubuntu
+    state: directory
+
+- name: Linkando o arquivo admin.conf para o ~/kube/config
+  copy:
+    remote_src: true
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+
+- name: Configurando o Pod Network WeaveNet
+  shell: kubectl apply -f {{ default_k8s_weavenet_url  }}
+  register: weavenet_result
+
+- name: Pegando o Token para Adicionar os Workers no Cluster
+  shell: kubeadm token list | cut -d ' ' -f1 | sed -n '2p'
+  register: k8s_token
+
+- name: CA Hash
+  shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: k8s_master_ca_hash
+
+- name: Master Certificate-Key 
+  shell: kubeadm init phase upload-certs --upload-certs | tail -1
+  register: k8s_master_ca_key
+
+- name: Master KubeConfig certificate 
+  shell: kubectl config view --flatten
+  register: k8s_master_kubeconfig
+
+- name: Adicionando o Token e o Hash em um dummy host
+  add_host:
+    name: "K8S_TOKEN_HOLDER"
+    token: "{{ k8s_token.stdout  }}"
+    hash: "{{ k8s_master_ca_hash.stdout }}"
+    cert: "{{ k8s_master_ca_key.stdout }}"
+    kubeconfig: "{{ k8s_master_kubeconfig.stdout }}"
+  

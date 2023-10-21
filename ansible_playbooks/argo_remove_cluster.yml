@@ -1,0 +1,3 @@
+---
+- name: Remove Cluster from ArgoCD
+  shell: argocd cluster rm {{ KUBE_CONTEXT }}

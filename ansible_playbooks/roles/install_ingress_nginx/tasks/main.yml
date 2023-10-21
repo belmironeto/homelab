@@ -1,0 +1,39 @@
+---
+- name: Download Nginx Ingress Controller manifest to the cluster.
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/baremetal/deploy.yaml
+    dest: /tmp/installNginx.yaml
+    mode: '0765'
+    owner: ubuntu
+    group: ubuntu
+
+- name: Install Nginx Ingress Controller.
+  kubernetes.core.k8s:
+    state: present
+    src: /tmp/installNginx.yaml
+    kubeconfig: /home/ubuntu/.kube/config
+
+- name: Expose Ingress Default Services
+  kubernetes.core.k8s:
+    kubeconfig: /home/ubuntu/.kube/config
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ingress-nginx-controller-loadbalancer
+        namespace: ingress-nginx
+      spec:
+        selector:
+          app.kubernetes.io/component: controller
+          app.kubernetes.io/instance: ingress-nginx
+          app.kubernetes.io/name: ingress-nginx
+        ports:
+          - name: http
+            port: 80
+            protocol: TCP
+            targetPort: 80
+          - name: https
+            port: 443
+            protocol: TCP
+            targetPort: 443
+        type: LoadBalancer

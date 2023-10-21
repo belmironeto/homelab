@@ -1,0 +1,60 @@
+---
+- name: Create ArgoCD NameSpace
+  kubernetes.core.k8s:
+    name: argocd
+    api_version: v1
+    kind: Namespace
+    state: present
+    kubeconfig: /home/ubuntu/.kube/config
+
+- name: Download ArgoCD manifest to the cluster.
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    dest: /tmp/installArgo.yaml
+    mode: '0765'
+    owner: ubuntu
+    group: ubuntu
+
+- name: Apply ArgoCD manifest to the cluster.
+  kubernetes.core.k8s:
+    state: present
+    namespace: argocd
+    src: /tmp/installArgo.yaml
+    kubeconfig: /home/ubuntu/.kube/config
+
+- name: Patch ArgoCD Service
+  kubernetes.core.k8s:
+    kubeconfig: /home/ubuntu/.kube/config
+    state: patched
+    kind: Service
+    name: argocd-server
+    namespace: argocd
+    definition:
+      spec:
+        type: LoadBalancer
+
+- name: Expose ArgoCD UI
+  kubernetes.core.k8s:
+    kubeconfig: /home/ubuntu/.kube/config
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: argocd-server-ingress
+        namespace: argocd
+        annotations:
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      spec:
+        ingressClassName: nginx
+        rules:
+        - host: argocd.example.com
+          http:
+            paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: argocd-server
+                  port:
+                    name: https

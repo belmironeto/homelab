@@ -1,0 +1,11 @@
+[masters]
+%{ for ip in masters_ip ~}
+${ip}
+%{ endfor ~}
+[workers]
+%{ for ip in workers_ip ~}
+${ip}
+%{ endfor ~}
+[workers:vars]
+K8S_MASTER_NODE_IP=192.168.1.100
+K8S_API_SECURE_PORT=3446

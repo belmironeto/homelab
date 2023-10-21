@@ -1,0 +1,7 @@
+---
+- name: Remove Context from kubeconfig
+  shell: kubectl config unset contexts.k8s-cluster
+- name: Remove Cluster from kubeconfig
+  shell: kubectl config unset clusters.k8s-cluster
+- name: Remove User from kubeconfig
+  shell: kubectl config unset users.kubernetes-admin

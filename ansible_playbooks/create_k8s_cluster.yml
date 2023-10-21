@@ -1,0 +1,42 @@
+- hosts: all
+  become: yes
+  user: ubuntu
+  gather_facts: no
+  tasks:
+    - name: Removendo cluster atual
+      shell: kubeadm reset --force
+
+- hosts: all
+  become: yes
+  user: ubuntu
+  gather_facts: no
+  roles:
+  - { role: install_k8s_dependencies, tags: ["install_k8s_dependencies"] }
+
+- hosts: masters[0]
+  become: yes
+  user: ubuntu
+  gather_facts: no
+  roles:
+  - { role: init_k8s_master, tags: ["init_k8s_master"] }
+
+- hosts: masters:!masters[0]
+  become: yes
+  user: ubuntu
+  gather_facts: no
+  roles:
+  - { role: join_k8s_masters, tags: ["join_k8s_masters"] }
+
+- hosts: workers
+  become: yes
+  user: ubuntu
+  gather_facts: no
+  roles:
+  - { role: join_k8s_workers, tags: ["join_k8s_workers"] }
+
+- hosts: localhost
+  user: belmiro
+  gather_facts: no
+  roles:
+   - { role: k8s_add_context, tags: ["k8s_add_context_local"] }
+   - { role: argo_add_cluster, KUBE_CONTEXT: "k8s-cluster", tags: ["argo_add_cluster"] }

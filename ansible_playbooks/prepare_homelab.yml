@@ -1,0 +1,10 @@
+---
+- name: "Install K3S in a Single Node and Deploy NGINX Ingress Controller, ArgoCD and Hashcorp Vault"
+  hosts: all
+  become: true
+  user: ubuntu
+  gather_facts: false
+  roles:
+    - { role: install_k3s, tags: ["install_k3s"] }
+    - { role: install_ingress_nginx, tags: ["install_ingress"]}
+    - { role: install_argocd, tags: ["install_argocd"]}

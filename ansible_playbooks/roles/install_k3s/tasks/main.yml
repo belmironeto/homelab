@@ -1,0 +1,50 @@
+---
+- name: Download K3S installation Script
+  get_url:
+    url: "https://get.k3s.io"
+    dest: /tmp/installK3S.sh
+    mode: '0765'
+    owner: ubuntu
+    group: ubuntu
+
+- name: Execute K3S installation from the previous downloaded script
+  command: sh /tmp/installK3S.sh --disable=traefik
+
+- name: Create KubeConfig Folder
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+
+- name: Copy KubeConfig to correct Folder
+  become: true
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0765'
+    remote_src: true
+
+- name: Ensure KubeConfig points to correct destination
+  blockinfile:
+    dest: "/home/ubuntu/.bashrc"
+    block: |
+      export KUBECONFIG=~/.kube/config
+    marker: '# {mark} ANSIBLE MANAGED BLOCK - KubeConfig'
+    create: yes 
+
+- name: Install Python pip
+  apt: name={{ item }} update_cache=true state=present force_apt_get=yes
+  with_items:
+  - python-pip
+  - python3-pip
+  become: true
+
+- name: Install Python Dependencies
+  pip: 
+    name:
+      - openshift
+      - pyyaml
+      - kubernetes 

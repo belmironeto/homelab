@@ -1,0 +1,12 @@
+---
+- name: Create Cluster Cert locally
+  copy:
+    dest: "/home/belmiro/.kube/k8s-cluster.crt"
+    content: |
+      {{ hostvars['K8S_TOKEN_HOLDER']['kubeconfig'] }}
+- name: Add Cluster to KubeConfig local
+  shell: cp ~/.kube/config ~/.kube/config_bkp && KUBECONFIG=~/.kube/config:/home/belmiro/.kube/k8s-cluster.crt kubectl config view --flatten > /tmp/config && mv /tmp/config ~/.kube/config
+- name: Rename Context
+  shell: kubectx k8s-cluster=kubernetes-admin@kubernetes
+- name: Change Context to New
+  shell: kubectx k8s-cluster
