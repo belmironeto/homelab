@@ -48,6 +48,13 @@ function prepareGit () {
   git config --global user.email belmiro.neto@live.com
 }
 
+function installArgo () {
+  echo -e "${GREEN}...::::|| Installing ArgoCli ||::::...${ENDCOLOR}"
+  curl -sSL -o argocd-linux-arm64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-arm64
+  sudo install -m 555 argocd-linux-arm64 /usr/local/bin/argocd
+  rm argocd-linux-arm64
+}
+
 function installAnsible () {
   echo -e "${GREEN}...::::|| Installing Ansible ||::::...${ENDCOLOR}"
   sudo apt install software-properties-common
@@ -57,10 +64,11 @@ function installAnsible () {
 }
 
 function execAll() {
-#  installGeneral
+  installGeneral
   installSnap
   snapInstallPackages
- # installAnsible
+  installAnsible
+  installArgo
   prepareGit
 }
 
